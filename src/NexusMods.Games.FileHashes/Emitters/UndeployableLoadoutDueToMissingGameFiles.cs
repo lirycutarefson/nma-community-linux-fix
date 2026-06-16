@@ -22,6 +22,20 @@ public class UndeployableLoadoutDueToMissingGameFiles : ILoadoutDiagnosticEmitte
         _connection = serviceProvider.GetRequiredService<IConnection>();
     }
 
+    private static bool IsOptionalGogGalaxyMetadataPath(GamePath path)
+    {
+        if (path.LocationId != LocationId.Game)
+            return false;
+
+        var value = path.Path.ToString();
+
+        if (!value.StartsWith("goggame-", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        return value.EndsWith(".info", StringComparison.OrdinalIgnoreCase)
+               || value.EndsWith(".hashdb", StringComparison.OrdinalIgnoreCase);
+    }
+
     public IAsyncEnumerable<Diagnostic> Diagnose(Loadout.ReadOnly loadout, CancellationToken cancellationToken) => throw new NotSupportedException();
     public async IAsyncEnumerable<Diagnostic> Diagnose(Loadout.ReadOnly loadout, FrozenDictionary<GamePath, SyncNode> syncTree, [EnumeratorCancellation] CancellationToken cancellationToken)
     {
@@ -35,6 +49,8 @@ public class UndeployableLoadoutDueToMissingGameFiles : ILoadoutDiagnosticEmitte
         foreach (var (gamePath, node) in syncTree)
         {
             if (node.SourceItemType is not LoadoutSourceItemType.Game || !node.Actions.HasFlag(Actions.WarnOfUnableToExtract)) continue;
+            if (IsOptionalGogGalaxyMetadataPath(gamePath)) continue;
+
             totalSize += node.Loadout.Size;
             count++;
 

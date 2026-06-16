@@ -316,6 +316,17 @@ internal sealed class FileHashesService : IFileHashesService, IDisposable, IHost
         return Current;
     }
 
+    private static bool IsOptionalGogGalaxyMetadataPath(RelativePath path)
+    {
+        var value = path.ToString();
+
+        if (!value.StartsWith("goggame-", StringComparison.OrdinalIgnoreCase))
+            return false;
+
+        return value.EndsWith(".info", StringComparison.OrdinalIgnoreCase)
+               || value.EndsWith(".hashdb", StringComparison.OrdinalIgnoreCase);
+    }
+
     /// <inheritdoc/>
     public IEnumerable<GameFileRecord> GetGameFiles(LocatorIdsWithGameStore locatorIdsWithGameStore)
     {
@@ -366,6 +377,9 @@ internal sealed class FileHashesService : IFileHashesService, IDisposable, IHost
             {
                 foreach (var file in manifest.Files)
                 {
+                    if (IsOptionalGogGalaxyMetadataPath(file.Path))
+                        continue;
+
                     yield return new GameFileRecord
                     {
                         Path = (LocationId.Game, file.Path),

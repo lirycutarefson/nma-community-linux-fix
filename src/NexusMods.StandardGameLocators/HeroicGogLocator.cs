@@ -48,12 +48,17 @@ public class HeroicGogLocator : IGameLocator
             if (!_cachedGames.TryGetValue(GOGGameId.From(id), out var found)) continue;
             var fs = found.Path.FileSystem;
             var gamePath = found.Path;
+            ulong[] heroicDlcIds = [];
 
             ILinuxCompatibilityDataProvider? linuxCompatibilityDataProvider = null;
             var targetOS = OSInformation.Shared;
 
             if (found is HeroicGOGGame heroicGOGGame)
             {
+                var installedDLCs = heroicGOGGame.InstalledDLCs;
+                heroicDlcIds = new ulong[installedDLCs.Count];
+                for (var i = 0; i < installedDLCs.Count; i++)
+                    heroicDlcIds[i] = (ulong)installedDLCs[i].Value;
                 targetOS = new OSInformation(heroicGOGGame.Platform);
 
                 var wineData = heroicGOGGame.WineData;
@@ -84,7 +89,7 @@ public class HeroicGogLocator : IGameLocator
                     BuildId = found.BuildId,
                     LinuxCompatibilityDataProvider = linuxCompatibilityDataProvider,
                     // TODO: FIX THIS
-                    DLCBuildIds = [],
+                    DLCBuildIds = heroicDlcIds,
                 }
             );
         }
